@@ -1,0 +1,61 @@
+/* ***************************************
+	PAGINATION
+*************************************** */
+.elgg-pagination {
+	margin: 1rem auto;
+	display: block;
+	text-align: center;
+	
+	li {
+		display: inline-block;
+		text-align: center;
+		margin-left: -1px;
+		border: 1px solid var(--elgg-border-color-soft);
+		
+		&.elgg-state-disabled > span {
+			color: var(--elgg-text-color-mild);
+		}
+		
+		&.elgg-state-selected > span {
+			color: var(--elgg-text-color-soft);
+		}
+		
+		&:first-child {
+			border-top-left-radius: 3px;
+			border-bottom-left-radius: 3px;
+		}
+		
+		&.elgg-pagination-previous {
+			> a:before,
+			> span:before {
+				content: "\ab";
+				margin-right: 0.5rem;
+			}
+		}
+		
+		&:last-child {
+			border-top-right-radius: 3px;
+			border-bottom-right-radius: 3px;
+		}
+		
+		&.elgg-pagination-next {
+			> a:after,
+			> span:after {
+				content: "\bb";
+				margin-left: 0.5rem;
+			}
+		}
+		
+		> a,
+		> span {
+			display: inline-block;
+			padding: 0.5rem 1rem;
+			color: var(--elgg-text-color-strong);
+		}
+		
+		> a:hover {
+			background: var(--elgg-background-color-mild);
+			text-decoration: none;
+		}
+	}
+}

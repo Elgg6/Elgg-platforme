@@ -1,0 +1,39 @@
+.elgg-page-default {
+	.elgg-page-section > .elgg-inner {
+		max-width: var(--elgg-page-section-max-width);
+		margin: 0 auto;
+	}
+	
+	.elgg-page-header > .elgg-inner {
+		padding: 0;
+		margin: 0;
+		max-width: unset;
+		
+		.elgg-header-image {
+			width: 100%;
+			height: 40vh;
+			
+			> div {
+				background-size: cover;
+				background-position: center;
+				position: fixed;
+				width: 100%;
+				height: 40vh;
+			}
+		}
+	}
+	
+	.elgg-page-topbar {
+		padding: 0 1rem;
+	}
+	
+	.elgg-page-body {
+		position: relative;
+		padding: 2rem 1rem;
+		background: var(--elgg-body-background-color);
+	}
+	
+	.elgg-page-footer {
+		padding: 1rem;
+	}
+}

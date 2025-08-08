@@ -1,0 +1,106 @@
+/*
+* Comments
+*/
+.elgg-comments .elgg-list,
+.elgg-river-comments {
+	position: relative;
+		
+	/* Comments triangle */
+	&:before {
+		content: "\25b2";
+		color: #ffffff;
+		position: absolute;
+		text-shadow: 0 -2px 0 var(--elgg-border-color-soft);
+		font-size: 1rem;
+		top: -1rem;
+		left: 2rem;
+		margin-right: 1.5rem;
+		line-height: 1rem;
+		padding-top: 4px;
+		pointer-events: none;
+	}
+}
+
+.elgg-river-comments {
+	margin-top: 2rem;
+	
+	> li {
+		border: 0;
+		padding: 0;
+		margin-top: -1px;
+		
+		/* Comment highlighting that automatically fades away */
+		&.elgg-state-highlight {
+			animation: comment-highlight 5s;
+		}
+	}
+}
+
+.comments-list {
+	margin: 1.5rem 0 1rem 0;
+	border: none;
+	
+	> li {
+		border: 0;
+		margin-top: -1px;
+		padding: 0;
+		
+		&:target,
+		&.elgg-state-highlight {
+			> .elgg-listing-full > .elgg-listing-full-header {
+				animation: comment-highlight 5s;
+			}
+		}
+	}
+}
+
+.elgg-river-responses,
+.elgg-comments {
+	.elgg-item-object-comment {
+		article {
+			padding: 1rem;
+			border-style: solid;
+			border-color: var(--elgg-border-color-soft);
+			border-width: 1px;
+		}
+		
+		> .elgg-listing-full {
+			.elgg-listing-full-header {
+				margin: 0;
+			}
+			
+			> .elgg-listing-full-responses {
+				padding: 0 0 0 2rem;
+				
+				border-left: 2px dashed var(--elgg-border-color-soft);
+			}
+		}
+	}
+}
+
+.elgg-module-comments {
+	margin: 0;
+}
+
+#comments-login {
+	width: auto;
+	max-width: 300px;
+	position: relative;
+}
+
+#comments {
+	.elgg-form-comment-save {
+		margin-top: 1rem;
+		
+		.elgg-field-label {
+			display: none;
+		}
+	}
+}
+
+/* Standard syntax */
+@keyframes comment-highlight {
+	from {
+		background: var(--elgg-state-notice-background-color);
+	}
+}

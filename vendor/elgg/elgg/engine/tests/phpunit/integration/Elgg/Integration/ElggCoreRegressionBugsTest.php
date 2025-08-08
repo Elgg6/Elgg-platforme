@@ -1,0 +1,329 @@
+<?php
+
+namespace Elgg\Integration;
+
+/**
+ * Elgg Regression Tests -- GitHub Bugfixes
+ * Any bugfixes from GitHub that require testing belong here.
+ */
+class ElggCoreRegressionBugsTest extends \Elgg\IntegrationTestCase {
+
+	/**
+	 * @var bool previous IgnoreAccess state
+	 */
+	protected $ia;
+	
+	public function up() {
+		$this->ia = elgg()->session_manager->setIgnoreAccess(true);
+	}
+
+	public function down() {
+		elgg()->session_manager->setIgnoreAccess($this->ia);
+	}
+
+	/**
+	 * @see https://github.com/Elgg/Elgg/issues/1558
+	 */
+	public function testElggObjectDeleteAnnotations() {
+		$entity = $this->createObject();
+		
+		$entity->annotate('test', 'hello', ACCESS_PUBLIC);
+
+		$entity->deleteAnnotations('does not exist');
+
+		$this->assertEquals(1, $entity->countAnnotations('test'));
+	}
+
+	/**
+	 * Check canEdit() works for contains regardless of groups
+	 *
+	 * @see https://github.com/Elgg/Elgg/issues/3722
+	 */
+	function testCanWriteToContainer() {
+		$user = $this->createUser();
+		$owner = $this->createUser();
+		$object = $this->createObject([
+			'owner_guid' => $owner->guid, // make sure this is a different user
+		]);
+		$group = $this->createGroup([
+			'owner_guid' => $owner->guid, // make sure this is a different user
+		]);
+
+		// disable access overrides because we're admin.
+		elgg_call(ELGG_ENFORCE_ACCESS, function() use ($user, $object, $group) {
+			$this->assertFalse($object->canWriteToContainer($user->guid, 'object', 'foo'));
+	
+			// register event to allow access
+			$handler = function (\Elgg\Event $event) use ($user) {
+				$event_user = $event->getUserParam();
+				if ($event_user->guid === $user->guid) {
+					return true;
+				}
+			};
+	
+			elgg_register_event_handler('container_permissions_check', 'object', $handler, 600);
+			$this->assertTrue($object->canWriteToContainer($user->guid, 'object', 'foo'));
+			elgg_unregister_event_handler('container_permissions_check', 'object', $handler);
+	
+			$this->assertFalse($group->canWriteToContainer($user->guid, $object->getType(), $object->getSubtype()));
+			$group->join($user);
+			$this->assertTrue($group->canWriteToContainer($user->guid, $object->getType(), $object->getSubtype()));
+		});
+	}
+
+	/**
+	 * @see https://github.com/elgg/elgg/issues/3210 - Don't remove -s in friendly titles
+	 * @see https://github.com/elgg/elgg/issues/2276 - improve char encoding
+	 * @see https://github.com/Elgg/Elgg/issues/13228 - length limit for multybyte characters
+	 * @see https://github.com/Elgg/Elgg/issues/14577 - improved multibyte cutoff place
+	 *
+	 * @dataProvider friendlyTitleProvider
+	 */
+	public function testFriendlyTitle($input, $expected) {
+		$actual = elgg_get_friendly_title($input);
+		$this->assertEquals($expected, $actual);
+	}
+	
+	public static function friendlyTitleProvider() {
+		$cases = [
+			// acid test
+			["B&N > Amazon, OK? <bold> 'hey!' $34", "bn-amazon-ok-bold-hey-34"],
+			
+			// hyphen, underscore and ASCII whitespace replaced by separator,
+			// other non-alphanumeric ASCII removed
+			["a-a_a a\na\ra\ta\va!a\"a#a\$a%aa'a(a)a*a+a,a.a/a:a;a=a?a@a[a\\a]a^a`a{a|a}a~a", "a-a-a-a-a-a-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"],
+			
+			// separators trimmed
+			["-_ hello _-", "hello"],
+			
+			// accents removed, lower case, other multibyte chars are URL encoded
+			// Iñtërnâtiônàlizætiøn, AND 日本語
+			["I\xC3\xB1t\xC3\xABrn\xC3\xA2ti\xC3\xB4n\xC3\xA0liz\xC3\xA6ti\xC3\xB8n, AND \xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E", 'internationalizaetion-and-%E6%97%A5%E6%9C%AC%E8%AA%9E'],
+			
+			// multybyte length limit #13228
+			['দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষদ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষদ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষদ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষদ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষদ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষদ্ধক্তপ্লক্তক্ষ-দ্ধক্তপ্লক্তক্ষ-দ্ধ', '%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%AA%E0%A7%8D%E0%A6%B2%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%95%E0%A7%8D%E0%A6%B7-%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%AA%E0%A7%8D%E0%A6%B2%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%95%E0%A7%8D%E0%A6%B7%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%AA%E0%A7%8D%E0%A6%B2%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%95%E0%A7%8D%E0%A6%B7-%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%AA%E0%A7%8D%E0%A6%B2%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%95%E0%A7%8D%E0%A6%B7-%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%AA%E0%A7%8D%E0%A6%B2%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%95%E0%A7%8D%E0%A6%B7-%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%AA%E0%A7%8D%E0%A6%B2%E0%A6%95%E0%A7%8D%E0%A6%A4%E0%A6%95%E0%A7%8D%E0%A6%B7%E0%A6%A6%E0%A7%8D%E0%A6%A7%E0%A6%95%E0%A7%8D%E0%A6%A4'],
+			
+			// multibyte chars aren't cut off mid-character #14577
+			['Morihei Ueshiba O Sensei - Rare Aikido Demonstration (1957) 合気道植芝 盛平', 'morihei-ueshiba-o-sensei-rare-aikido-demonstration-1957-%E5%90%88%E6%B0%97%E9%81%93%E6%A4%8D%E8%8A%9D-%E7%9B%9B%E5%B9%B3'],
+		];
+		
+		if (\Elgg\Translit::hasNormalizerSupport()) {
+			$cases[] = ["A\xCC\x8A", "a"]; // A followed by 'COMBINING RING ABOVE' (U+030A)
+		}
+		
+		return $cases;
+	}
+
+	/**
+	 * Test #5369 -- elgg_parse_urls()
+	 * @see https://github.com/Elgg/Elgg/issues/5369
+	 *
+	 * @dataProvider parseUrlsProvider
+	 */
+	public function testParseUrls($input, $expected) {
+		$this->assertEquals($expected, elgg_parse_urls($input));
+	}
+	
+	public static function parseUrlsProvider() {
+		return [
+			['no.link.here', 'no.link.here'],
+			['simple link http://example.org test', 'simple link <a href="http://example.org" rel="nofollow">http://example.org</a> test'],
+			['non-ascii http://ñew.org/ test', 'non-ascii <a href="http://ñew.org/" rel="nofollow">http://ñew.org/</a> test'],
+			// section 2.1
+			['percent encoded http://example.org/a%20b test', 'percent encoded <a href="http://example.org/a%20b" rel="nofollow">http://example.org/a%20b</a> test'],
+			// section 2.2: skipping single quote and parenthese
+			['reserved characters http://example.org/:/?#[]@!$&*+,;= test', 'reserved characters <a href="http://example.org/:/?#[]@!$&*+,;=" rel="nofollow">http://example.org/:/?#[]@!$&*+,;=</a> test'],
+			// section 2.3
+			['unreserved characters http://example.org/a1-._~ test', 'unreserved characters <a href="http://example.org/a1-._~" rel="nofollow">http://example.org/a1-._~</a> test'],
+			
+			['parameters http://example.org/?val[]=1&val[]=2 test', 'parameters <a href="http://example.org/?val[]=1&val[]=2" rel="nofollow">http://example.org/?val[]=1&val[]=2</a> test'],
+			['port http://example.org:80/ test', 'port <a href="http://example.org:80/" rel="nofollow">http://example.org:80/</a> test'],
+			
+			['parentheses (http://www.google.com) test', 'parentheses (<a href="http://www.google.com" rel="nofollow">http://www.google.com</a>) test'],
+			['comma http://elgg.org, test', 'comma <a href="http://elgg.org" rel="nofollow">http://elgg.org</a>, test'],
+			['period http://elgg.org. test', 'period <a href="http://elgg.org" rel="nofollow">http://elgg.org</a>. test'],
+			['exclamation http://elgg.org! test', 'exclamation <a href="http://elgg.org" rel="nofollow">http://elgg.org</a>! test'],
+			
+			['already anchor <a href="http://twitter.com/">twitter</a> test', 'already anchor <a href="http://twitter.com/">twitter</a> test'],
+			
+			['ssl https://example.org/ test', 'ssl <a href="https://example.org/" rel="nofollow">https://example.org/</a> test'],
+			['ftp ftp://example.org/ test', 'ftp <a href="ftp://example.org/" rel="nofollow">ftp://example.org/</a> test'],
+			
+			['web archive anchor <a href="http://web.archive.org/web/20000229040250/http://www.google.com/">google</a>', 'web archive anchor <a href="http://web.archive.org/web/20000229040250/http://www.google.com/">google</a>'],
+			
+			['single quotes already anchor <a href=\'http://www.yahoo.com\'>yahoo</a>', 'single quotes already anchor <a href=\'http://www.yahoo.com\'>yahoo</a>'],
+			
+			['unquoted already anchor <a href=http://www.yahoo.com>yahoo</a>', 'unquoted already anchor <a href=http://www.yahoo.com>yahoo</a>'],
+			
+			['parens in uri http://thedailywtf.com/Articles/A-(Long-Overdue)-BuildMaster-Introduction.aspx', 'parens in uri <a href="http://thedailywtf.com/Articles/A-(Long-Overdue)-BuildMaster-Introduction.aspx" rel="nofollow">http://thedailywtf.com/Articles/A-(Long-Overdue)-BuildMaster-Introduction.aspx</a>'],
+		];
+	}
+
+	/**
+	 * Test #10398 -- elgg_parse_emails()
+	 * @see https://github.com/Elgg/Elgg/pull/10398
+	 *
+	 * @dataProvider elggParseEmailsProvider
+	 */
+	public function testElggParseEmails($input, $expected) {
+		$this->assertEquals($expected, elgg_parse_emails($input));
+	}
+	
+	public static function elggParseEmailsProvider() {
+		return [
+			['no.email.here', 'no.email.here'],
+			['simple email mail@test.com test', 'simple email <a href="mailto:mail@test.com" rel="nofollow">mail@test.com</a> test'],
+			['simple paragraph <p>mail@test.com</p>', 'simple paragraph <p><a href="mailto:mail@test.com" rel="nofollow">mail@test.com</a></p>'],
+			['multiple matches mail@test.com test mail@test.com test', 'multiple matches <a href="mailto:mail@test.com" rel="nofollow">mail@test.com</a> test <a href="mailto:mail@test.com" rel="nofollow">mail@test.com</a> test'],
+			['invalid email 1 @invalid.com test', 'invalid email 1 @invalid.com test'],
+			['invalid email 2 mail@invalid. test', 'invalid email 2 mail@invalid. test'],
+			['no double parsing <a href="mailto:mail@test.com" rel="nofollow">mail@test.com</a> test', 'no double parsing <a href="mailto:mail@test.com" rel="nofollow">mail@test.com</a> test'],
+			['no double parsing 2 <a href="#">mail@test.com</a> test', 'no double parsing 2 <a href="#">mail@test.com</a> test'],
+			['no double parsing 3 <a href="#">with a lot of text - mail@test.com - around it</a> test', 'no double parsing 3 <a href="#">with a lot of text - mail@test.com - around it</a> test'],
+		];
+	}
+
+	/**
+	 * Ensure additional select columns do not end up in entity attributes.
+	 *
+	 * @see https://github.com/Elgg/Elgg/issues/5538
+	 *
+	 * @dataProvider extraColumnsDontAppearInAttributesProvider
+	 */
+	public function testExtraColumnsDontAppearInAttributes($type) {
+		$seed_entity = false;
+		if ($type !== 'site') {
+			// make sure the entity type exists in DB
+			$seed_entity = $this->createOne($type);
+	
+			// entity cache interferes with our test
+			$seed_entity->invalidateCache();
+		}
+
+		$entities = elgg_get_entities([
+			'type' => $type,
+			'selects' => ['1 as _nonexistent_test_column'],
+			'limit' => 1,
+		]);
+
+		$this->assertNotEmpty($entities, "Query for '$type' did not return an entity.");
+		
+		$entity = $entities[0];
+		$this->assertNull($entity->_nonexistent_test_column, "Additional select columns are leaking to attributes for '$type'");
+	}
+	
+	public static function extraColumnsDontAppearInAttributesProvider() {
+		return [
+			['site'],
+			['user'],
+			['group'],
+			['object'],
+		];
+	}
+
+	/**
+	 * @see https://github.com/Elgg/Elgg/issues/6225
+	 */
+	public function testUpdateHandlersCanChangeAttributes() {
+		$object = $this->createObject([
+			'subtype' => 'issue6225',
+			'access_id' => ACCESS_PUBLIC,
+		]);
+		$guid = $object->guid;
+
+		elgg_register_event_handler('update', 'object', [
+			self::class,
+			'handleUpdateForIssue6225test'
+		]);
+
+		$object->save();
+
+		elgg_unregister_event_handler('update', 'object', [
+			self::class,
+			'handleUpdateForIssue6225test'
+		]);
+
+		$object->invalidateCache();
+
+		$object = get_entity($guid);
+		$this->assertEquals(ACCESS_PRIVATE, $object->access_id);
+	}
+
+	public static function handleUpdateForIssue6225test(\Elgg\Event $event) {
+		$object = $event->getObject();
+		$object->access_id = ACCESS_PRIVATE;
+	}
+
+	/**
+	 * Tests elgg_get_entity_statistics() without owner
+	 *
+	 * @see https://github.com/Elgg/Elgg/pull/7845
+	 */
+	function testGlobalGetEntityStatistics() {
+
+		$subtype = 'issue7845' . rand(0, 100);
+
+		$this->createObject([
+			'subtype' => $subtype,
+		]);
+
+		$stats = elgg_get_entity_statistics();
+
+		$this->assertEquals(1, $stats['object'][$subtype]);
+	}
+
+	/**
+	 * Tests elgg_get_entity_statistics() with an owner
+	 *
+	 * @see https://github.com/Elgg/Elgg/pull/7845
+	 */
+	function testOwnedGetEntityStatistics() {
+
+		$user = $this->createUser();
+
+		$subtype = 'issue7845' . rand(0, 100);
+
+		$this->createObject([
+			'subtype' => $subtype,
+			'owner_guid' => $user->guid,
+		]);
+
+		$stats = elgg_get_entity_statistics([
+			'owner_guid' => $user->guid,
+		]);
+
+		$this->assertEquals(1, $stats['object'][$subtype]);
+	}
+	
+	/**
+	 * Test that entities can be found with both metadata and annotation limitations
+	 *
+	 * @see https://github.com/Elgg/Elgg/issues/14405
+	 */
+	function testGetEntitiesWithMetadataAndAnnotations() {
+		$entity = $this->createObject();
+		
+		// make sure likes is supported
+		elgg_entity_enable_capability($entity->type, $entity->subtype, 'likable');
+		$this->createLikes($entity, 5);
+		
+		$this->assertNotEmpty($entity->__faker); // metadata
+		$this->assertNotEmpty($entity->countAnnotations('likes')); // annotations
+		
+		$entities = elgg_get_entities([
+			'type' => $entity->type,
+			'subtype' => $entity->subtype,
+			'metadata_names' => '__faker',
+			'annotation_name_value_pairs' => [
+				[
+					'name' => 'likes',
+					'value' => 'likes',
+					'case_sensitive' => false,
+					'type' => ELGG_VALUE_STRING,
+				],
+			],
+		]);
+		
+		$this->assertNotEmpty($entities);
+	}
+}

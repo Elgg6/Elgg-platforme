@@ -1,0 +1,21 @@
+{
+	"name": "elgg/uservalidationbyemail",
+	"type": "elgg-plugin",
+	"description": "Simple user account validation through email",
+	"license": "GPL-2.0-only",
+	"keywords": ["users", "admin", "security"],
+	"homepage": "https://elgg.org",
+	"authors": [
+		{
+			"name": "Elgg Core Team",
+			"role": "Developer"
+		}
+	],
+	"support": {
+		"source": "https://github.com/elgg/elgg",
+		"issues": "https://github.com/elgg/elgg/issues"
+	},
+	"conflict": {
+		"elgg/elgg": "<5.0"
+	}
+}

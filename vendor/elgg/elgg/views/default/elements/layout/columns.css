@@ -1,0 +1,40 @@
+.elgg-layout {
+	display: flex;
+	align-items: stretch;
+	flex-direction: column;
+	gap: 2rem;
+	
+	> .elgg-layout-sidebar-alt {
+		order: 0;
+	}
+	
+	> .elgg-layout-body {
+		flex: 1;
+		min-width: 1%;
+		background: white;
+		padding: 1rem;
+	}
+	
+	> .elgg-layout-sidebar {
+		order: 2;
+	}
+}
+
+@media $(media-desktop-up) {
+	.elgg-layout {
+		flex-direction: row;
+		min-height: calc(100vh - 8rem);
+		
+		> .elgg-layout-body {
+			padding: 2rem;
+		}
+		
+		> .elgg-layout-sidebar {
+			width: 18rem;
+		}
+		
+		> .elgg-layout-sidebar-alt {
+			max-width: 18rem;
+		}
+	}
+}

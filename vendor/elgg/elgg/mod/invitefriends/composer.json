@@ -1,0 +1,21 @@
+{
+	"name": "elgg/invitefriends",
+	"type": "elgg-plugin",
+	"description": "Adds the ability for users to invite friends through email",
+	"license": "GPL-2.0-only",
+	"keywords": ["social", "friends"],
+	"homepage": "https://elgg.org",
+	"authors": [
+		{
+			"name": "Elgg Core Team",
+			"role": "Developer"
+		}
+	],
+	"support": {
+		"source": "https://github.com/elgg/elgg",
+		"issues": "https://github.com/elgg/elgg/issues"
+	},
+	"conflict": {
+		"elgg/elgg": "<5.0"
+	}
+}

@@ -1,0 +1,60 @@
+/* ***************************************
+	ANCHORS & BADGES
+*************************************** */
+
+.elgg-anchor {
+	* {
+		display: inline;
+		
+		+ .elgg-anchor-label {
+			margin-left: 0.5rem;
+		}
+	}
+	
+	.elgg-icon {
+		color: inherit;
+		font-size: inherit;
+	}
+	
+	img {
+		vertical-align: middle;
+	}
+	
+	.elgg-anchor-label + * {
+		margin-left: 0.5rem;
+	}
+}
+
+.elgg-badge {
+	display: inline-block;
+	color: var(--elgg-text-color-strong);
+	background-color: var(--elgg-background-color-soft);
+	padding: .15rem .5rem;
+	margin-top: -.15rem;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: middle;
+	border-radius: 10px;
+	font-size: 0.7rem;
+	line-height: 1rem;
+	font-weight: bold;
+}
+
+.elgg-skiplink {
+	position: absolute;
+	left: -10000px;
+	top: auto;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	
+	&:focus {
+		position: fixed;
+		
+		width: auto;
+		height: auto;
+		
+		left: 1rem;
+		top: 1rem;
+	}
+}

@@ -1,0 +1,27 @@
+.elgg-profile-fields {
+	padding: 1.5rem;
+	display: grid;
+	row-gap: 1rem;
+	
+	.elgg-profile-field {
+		display: grid;
+		column-gap: 1rem;
+		
+		> .elgg-profile-field-label {
+			display: flex;
+			gap: .5rem;
+			
+			font-weight: var(--elgg-font-bold-weight);
+			font-size: 0.85rem;
+			color: var(--elgg-text-color-mild);
+		}
+	}
+}
+
+@media $(media-tablet-up) {
+	.elgg-profile-fields {
+		.elgg-profile-field {
+			grid-template-columns: 12rem 1fr;
+		}
+	}
+}

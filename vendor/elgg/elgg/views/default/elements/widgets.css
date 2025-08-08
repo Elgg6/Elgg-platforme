@@ -1,0 +1,113 @@
+/* ***************************************
+	Widgets
+*************************************** */
+.elgg-widgets-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 2rem;
+}
+
+.elgg-widgets {
+	flex-grow: 1;
+	flex-basis: 100%;
+}
+
+@media $(media-desktop-up) {
+	.elgg-widgets-grid {
+		flex-direction: row-reverse;
+		align-items: stretch;
+	}
+}
+
+.elgg-menu-title-widgets-container {
+	justify-content: flex-end;
+	flex-direction: row;
+	padding: 0.5rem;
+}
+
+.elgg-widgets-add-panel {
+	input[name="widget_search"] {
+		height: auto;
+	}
+	
+	ul {
+		border-top: 1px solid var(--elgg-border-color-soft);
+		margin-top: 0.5rem;
+		
+		> li {
+			display: flex;
+			justify-content: space-between;
+			padding: 0.5rem;
+			transition: background 0.2s linear;
+			border-bottom: 1px solid var(--elgg-border-color-soft);
+			
+			&:hover {
+				background: var(--elgg-background-color-mild);
+			}
+		}
+	}
+}
+
+.elgg-widgets-add-actions {
+	max-width: 10rem;
+	text-align: right;
+	padding-left: 0.25rem;
+}
+
+.elgg-widget-single.elgg-state-available .elgg-widgets-add-actions > span,
+.elgg-widget-single.elgg-state-unavailable .elgg-widgets-add-actions .elgg-button-submit {
+	display: none;
+}
+
+.elgg-module-widget {
+	border: 1px solid var(--elgg-border-color-soft);
+	
+	&.elgg-state-draggable {
+		&:hover {
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+		}
+		
+		.elgg-widget-handle {
+			cursor: move;
+			flex-grow: 1;
+		}
+	}
+		
+	> .elgg-head {
+		background-color: var(--elgg-background-color-mild);
+		padding: 0.5rem 1rem;
+		height: auto;
+		overflow: hidden;
+	}
+	
+	> .elgg-body {
+		background-color: #ffffff;
+		width: 100%;
+	}
+	
+	&:not(:hover):not(:focus-within) {
+		.elgg-menu-widget-container {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			margin: -1px;
+			border: 0;
+			padding: 0;
+			
+			white-space: nowrap;
+			
+			clip-path: inset(100%);
+			clip: rect(0 0 0 0);
+			overflow: hidden;
+		}
+	}
+	
+	.elgg-widget-content {
+		padding: 1rem;
+	}
+}
+
+.elgg-widget-placeholder {
+	border: 1px dashed #a1a1a3;
+	margin-bottom: 1rem;
+}

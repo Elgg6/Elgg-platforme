@@ -1,0 +1,21 @@
+{
+	"name": "elgg/site_notifications",
+	"type": "elgg-plugin",
+	"description": "Internal site notifications",
+	"license": "GPL-2.0-only",
+	"keywords": ["users", "groups", "notifications"],
+	"homepage": "https://elgg.org",
+	"authors": [
+		{
+			"name": "Elgg Core Team",
+			"role": "Developer"
+		}
+	],
+	"support": {
+		"source": "https://github.com/elgg/elgg",
+		"issues": "https://github.com/elgg/elgg/issues"
+	},
+	"conflict": {
+		"elgg/elgg": "<5.0"
+	}
+}

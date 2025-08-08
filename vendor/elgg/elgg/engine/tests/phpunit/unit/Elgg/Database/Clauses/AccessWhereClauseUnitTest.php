@@ -1,0 +1,312 @@
+<?php
+
+namespace Elgg\Database\Clauses;
+
+use Elgg\Database\EntityTable;
+use Elgg\Database\QueryBuilder;
+use Elgg\Database\Select;
+use Elgg\UnitTestCase;
+
+class AccessWhereClauseUnitTest extends UnitTestCase {
+
+	/**
+	 * @var \ElggUser
+	 */
+	protected $user;
+
+	/**
+	 * @var QueryBuilder
+	 */
+	protected $qb;
+
+	public function up() {
+		$this->qb = Select::fromTable(EntityTable::TABLE_NAME, 'alias');
+
+		$this->user = $this->createUser();
+		_elgg_services()->session_manager->setLoggedInUser($this->user);
+		_elgg_services()->events->backup();
+	}
+
+	public function down() {
+		_elgg_services()->events->restore();
+	}
+
+	public function testCanBuildAccessSqlClausesWithIgnoredAccess() {
+		$parts = [];
+		$parts[] = $this->qb->expr()->eq('alias.enabled', ':qb1');
+		$this->qb->param('yes', ELGG_VALUE_STRING);
+		$expected = $this->qb->merge($parts);
+
+		$query = new AccessWhereClause();
+		$query->ignore_access = true;
+		$query->use_deleted_clause = false;
+
+		$qb = Select::fromTable(EntityTable::TABLE_NAME, 'alias');
+		$actual = $query->prepare($qb, $qb->getTableAlias());
+
+		$this->assertEquals($expected, $actual);
+		$this->assertEquals($this->qb->getParameters(), $qb->getParameters());
+	}
+
+	public function testCanBuildAccessSqlClausesWithIgnoredAccessWithoutDisabledEntities() {
+		$expected = null;
+
+		$query = new AccessWhereClause();
+		$query->ignore_access = true;
+		$query->use_enabled_clause = false;
+		$query->use_deleted_clause = false;
+
+		$qb = Select::fromTable(EntityTable::TABLE_NAME, 'alias');
+		$actual = $query->prepare($qb, $qb->getTableAlias());
+
+		$this->assertEquals($expected, $actual);
+		$this->assertEquals($this->qb->getParameters(), $qb->getParameters());
+	}
+
+	public function testCanBuildAccessSqlForLoggedInUser() {
+		$this->assertFalse(elgg_is_admin_logged_in());
+
+		$parts = [];
+
+		$ors = $this->qb->merge([
+			$this->getOwnerClause($this->user->guid, 'alias'),
+			$this->getLoggedInAccessListClause('alias'),
+		], 'OR');
+
+		$parts[] = $this->qb->compare("{$this->qb->getTableAlias()}.enabled", '=', 'yes', ELGG_VALUE_STRING);
+		$parts[] = $ors;
+
+		$expected = $this->qb->merge($parts);
+
+		$query = new AccessWhereClause();
+		$query->use_deleted_clause = false;
+
+		$qb = Select::fromTable(EntityTable::TABLE_NAME, 'alias');
+		$actual = $query->prepare($qb, $qb->getTableAlias());
+
+		$this->assertEquals($expected, $actual);
+		$this->assertEquals($this->qb->getParameters(), $qb->getParameters());
+	}
+
+	public function testCanBuildAccessSqlWithNoTableAlias() {
+		$parts = [];
+
+		$ors = $this->qb->merge([
+			$this->getOwnerClause($this->user->guid, ''),
+			$this->getLoggedInAccessListClause(''),
+		], 'OR');
+
+		$parts[] = $this->qb->compare('enabled', '=', 'yes', ELGG_VALUE_STRING);
+		$parts[] = $ors;
+
+		$expected = $this->qb->merge($parts);
+
+		$query = new AccessWhereClause();
+		$query->use_deleted_clause = false;
+
+		$qb = Select::fromTable(EntityTable::TABLE_NAME, '');
+		$actual = $query->prepare($qb, $qb->getTableAlias());
+
+		$this->assertEquals($expected, $actual);
+		$this->assertEquals($this->qb->getParameters(), $qb->getParameters());
+	}
+
+	public function testCanBuildAccessSqlWithCustomGuidColumn() {
+		$parts = [];
+
+		$ors = $this->qb->merge([
+			$this->getOwnerClause($this->user->guid, 'alias', 'unit_test'),
+			$this->getLoggedInAccessListClause('alias'),
+		], 'OR');
+
+		$parts[] = $this->qb->compare("{$this->qb->getTableAlias()}.enabled", '=', 'yes', ELGG_VALUE_STRING);
+		$parts[] = $ors;
+
+		$expected = $this->qb->merge($parts);
+
+		$query = new AccessWhereClause();
+		$query->owner_guid_column = 'unit_test';
+		$query->use_deleted_clause = false;
+
+		$qb = Select::fromTable(EntityTable::TABLE_NAME, 'alias');
+		$actual = $query->prepare($qb, $qb->getTableAlias());
+
+		$this->assertEquals($expected, $actual);
+		$this->assertEquals($this->qb->getParameters(), $qb->getParameters());
+	}
+
+	public function testCanBuildAccessSqlForLoggedOutUser() {
+		$user = _elgg_services()->session_manager->getLoggedInUser();
+		_elgg_services()->session_manager->removeLoggedInUser();
+
+		$parts = [];
+
+		$ors = $this->qb->merge([
+			$this->getLoggedOutAccessListClause('alias'),
+		], 'OR');
+
+		$parts[] = $this->qb->compare("{$this->qb->getTableAlias()}.enabled", '=', 'yes', ELGG_VALUE_STRING);
+		$parts[] = $ors;
+
+		$expected = $this->qb->merge($parts);
+
+		$query = new AccessWhereClause();
+		$query->use_deleted_clause = false;
+
+		$qb = Select::fromTable(EntityTable::TABLE_NAME, 'alias');
+		$actual = $query->prepare($qb, $qb->getTableAlias());
+
+		$this->assertEquals($expected, $actual);
+		$this->assertEquals($this->qb->getParameters(), $qb->getParameters());
+
+		_elgg_services()->session_manager->setLoggedInUser($user);
+	}
+
+	public function testAccessEventRemoveEnabled() {
+		$handler = function (\Elgg\Event $event) {
+			$clauses = $event->getValue();
+			$clauses['ands'] = [];
+
+			return $clauses;
+		};
+
+		elgg_register_event_handler('get_sql', 'access', $handler);
+
+		// Even though the clause is removed, the parameter is still in the QB parameter list
+		$this->qb->param('yes', ELGG_VALUE_STRING);
+		$expected = null;
+
+		$query = new AccessWhereClause();
+		$query->ignore_access = true;
+		$query->use_deleted_clause = false;
+
+		$qb = Select::fromTable(EntityTable::TABLE_NAME, 'alias');
+		$actual = $query->prepare($qb, $qb->getTableAlias());
+
+		$this->assertEquals($expected, $actual);
+		$this->assertEquals($this->qb->getParameters(), $qb->getParameters());
+
+		elgg_unregister_event_handler('get_sql', 'access', $handler);
+	}
+
+	public function testAccessEventRemoveOrs() {
+		$handler = function (\Elgg\Event $event) {
+			$clauses = $event->getValue();
+			$clauses['ors'] = [];
+
+			return $clauses;
+		};
+
+		elgg_register_event_handler('get_sql', 'access', $handler);
+
+		$parts = [];
+		$parts[] = $this->qb->compare("{$this->qb->getTableAlias()}.enabled", '=', 'yes', ELGG_VALUE_STRING);
+		$expected = $this->qb->merge($parts);
+
+		$query = new AccessWhereClause();
+		$query->ignore_access = true;
+		$query->use_deleted_clause = false;
+
+		$qb = Select::fromTable(EntityTable::TABLE_NAME, 'alias');
+		$actual = $query->prepare($qb, $qb->getTableAlias());
+
+		$this->assertEquals($expected, $actual);
+		$this->assertEquals($this->qb->getParameters(), $qb->getParameters());
+
+		elgg_unregister_event_handler('get_sql', 'access', $handler);
+	}
+
+	public function testAccessEventAddOr() {
+		$handler = function (\Elgg\Event $event) {
+			$clauses = $event->getValue();
+			$qb = $event->getParam('query_builder');
+			$clauses['ors'][] = $qb->compare($qb->param(57, ELGG_VALUE_INTEGER), '>', $qb->param(37, ELGG_VALUE_INTEGER));
+
+			return $clauses;
+		};
+
+		elgg_register_event_handler('get_sql', 'access', $handler);
+
+		$parts = [];
+		$parts[] = $this->qb->compare("{$this->qb->getTableAlias()}.enabled", '=', 'yes', ELGG_VALUE_STRING);
+		$parts[] = $this->qb->merge([
+			$this->qb->compare(
+				$this->qb->param(57, ELGG_VALUE_INTEGER),
+				'>',
+				$this->qb->param(37, ELGG_VALUE_INTEGER)
+			)
+		], 'OR');
+
+		$expected = $this->qb->merge($parts);
+
+		$query = new AccessWhereClause();
+		$query->ignore_access = true;
+		$query->use_deleted_clause = false;
+
+		$qb = Select::fromTable(EntityTable::TABLE_NAME, 'alias');
+		$actual = $query->prepare($qb, $qb->getTableAlias());
+
+		$this->assertEquals($expected, $actual);
+		$this->assertEquals($this->qb->getParameters(), $qb->getParameters());
+
+		elgg_unregister_event_handler('get_sql', 'access', $handler);
+	}
+
+	public function testAccessEventAddAnd() {
+		$handler = function (\Elgg\Event $event) {
+			$clauses = $event->getValue();
+			$qb = $event->getParam('query_builder');
+			$clauses['ands'][] = $qb->compare($qb->param(57, ELGG_VALUE_INTEGER), '>', $qb->param(37, ELGG_VALUE_INTEGER));
+
+			return $clauses;
+		};
+
+		elgg_register_event_handler('get_sql', 'access', $handler);
+
+		$parts = [];
+		$parts[] = $this->qb->compare("{$this->qb->getTableAlias()}.enabled", '=', 'yes', ELGG_VALUE_STRING);
+		$parts[] = $this->qb->compare(
+			$this->qb->param(57, ELGG_VALUE_INTEGER),
+			'>',
+			$this->qb->param(37, ELGG_VALUE_INTEGER)
+		);
+
+		$expected = $this->qb->merge($parts);
+
+		$query = new AccessWhereClause();
+		$query->ignore_access = true;
+		$query->use_deleted_clause = false;
+
+		$qb = Select::fromTable(EntityTable::TABLE_NAME, 'alias');
+		$actual = $query->prepare($qb, $qb->getTableAlias());
+
+		$this->assertEquals($expected, $actual);
+		$this->assertEquals($this->qb->getParameters(), $qb->getParameters());
+
+		elgg_unregister_event_handler('get_sql', 'access', $handler);
+	}
+
+	protected function getOwnerClause($user_guid, $table_alias, $owner_guid = 'owner_guid') {
+		$alias = function ($column) use ($table_alias) {
+			return $table_alias ? "{$table_alias}.{$column}" : $column;
+		};
+
+		return $this->qb->compare($alias($owner_guid), '=', $user_guid, ELGG_VALUE_INTEGER);
+	}
+
+	protected function getLoggedInAccessListClause($table_alias) {
+		$alias = function ($column) use ($table_alias) {
+			return $table_alias ? "{$table_alias}.{$column}" : $column;
+		};
+
+		return $this->qb->compare($alias('access_id'), '=', [ACCESS_PUBLIC, ACCESS_LOGGED_IN], ELGG_VALUE_INTEGER);
+	}
+
+	protected function getLoggedOutAccessListClause($table_alias) {
+		$alias = function ($column) use ($table_alias) {
+			return $table_alias ? "{$table_alias}.{$column}" : $column;
+		};
+
+		return $this->qb->compare($alias('access_id'), '=', [ACCESS_PUBLIC], ELGG_VALUE_INTEGER);
+	}
+}
