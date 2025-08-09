@@ -111,13 +111,16 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
 
 # Enable Apache modules and configure
 RUN a2enmod rewrite headers expires && \
-    echo "DocumentRoot /var/www/html/elgg" > /etc/apache2/sites-available/000-default.conf && \
-    echo "<Directory /var/www/html/elgg>" >> /etc/apache2/sites-available/000-default.conf && \
-    echo "    Options Indexes FollowSymLinks" >> /etc/apache2/sites-available/000-default.conf && \
-    echo "    AllowOverride All" >> /etc/apache2/sites-available/000-default.conf && \
-    echo "    Require all granted" >> /etc/apache2/sites-available/000-default.conf && \
-    echo "</Directory>" >> /etc/apache2/sites-available/000-default.conf && \
-    echo "DirectoryIndex index.php" >> /etc/apache2/sites-available/000-default.conf
+    echo "<VirtualHost *:80>\n\
+        DocumentRoot /var/www/html/elgg\n\
+        <Directory /var/www/html/elgg>\n\
+            Options -Indexes +FollowSymLinks\n\
+            AllowOverride All\n\
+            Require all granted\n\
+        </Directory>\n\
+        ErrorLog \${APACHE_LOG_DIR}/error.log\n\
+        CustomLog \${APACHE_LOG_DIR}/access.log combined\n\
+    </VirtualHost>" > /etc/apache2/sites-available/000-default.conf
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -129,21 +132,23 @@ WORKDIR /var/www/html/elgg
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-progress --optimize-autoloader
 
-# Copy Elgg source code
-COPY . /var/www/html/elgg
+# Copy only necessary files (exclude development files)
+COPY . .
 
-# Create data & config directories (mount points for PVCs)
+# Create directories that will be mounted as volumes
 RUN mkdir -p /var/www/html/data \
-    && mkdir -p /var/www/html/elgg/elgg-config
+    && mkdir -p /var/www/html/elgg/elgg-config \
+    && touch /var/www/html/elgg/elgg-config/settings.php
 
-# Set permissions for runtime
-RUN chown -R www-data:www-data /var/www/html && \
-    find /var/www/html -type d -exec chmod 755 {} \; && \
-    find /var/www/html -type f -exec chmod 644 {} \; && \
-    chmod -R 775 /var/www/html/elgg/elgg-config /var/www/html/data
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && find /var/www/html -type d -exec chmod 755 {} \; \
+    && find /var/www/html -type f -exec chmod 644 {} \; \
+    && chmod -R 775 /var/www/html/elgg/elgg-config /var/www/html/data
 
-# These will be replaced by PVCs in Kubernetes
-VOLUME ["/var/www/html/data", "/var/www/html/elgg/elgg-config"]
+# Clean up unnecessary files
+RUN rm -rf /var/www/html/elgg/install/config/ \
+    && rm -f Dockerfile README.md *.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s \
