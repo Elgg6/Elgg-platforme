@@ -6,7 +6,7 @@ return [
     'dbuser' => 'admin',
     'dbpass' => 'admin1234',
     'dbname' => 'elggdb',
-    'dbhost' => 'localhost',
+    'dbhost' => getenv('ELGG_DB_HOST') ? : 'localhost',
     'dbprefix' => 'elgg_',
     'dataroot' => '/var/www/html/elgg/data',
     'wwwroot' => 'http://4.222.233.171/elgg',
