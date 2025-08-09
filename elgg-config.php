@@ -8,7 +8,7 @@ return [
     'dbname' => 'elggdb',
     'dbhost' => getenv('ELGG_DB_HOST') ? : 'localhost',
     'dbprefix' => 'elgg_',
-    'dataroot' => '/var/www/html/elgg/data',
+    'dataroot' => '/var/www/html/data',
     'wwwroot' => 'http://4.222.233.171/elgg',
     'path' => '/var/www/html/elgg',
     'siteemail' => 'oussamabitaa10@gmail.com',
