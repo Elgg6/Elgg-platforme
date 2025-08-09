@@ -39,30 +39,29 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
 # Enable Apache modules
 RUN a2enmod rewrite headers expires
 
-# Create necessary directories
-RUN mkdir -p /var/www/html/elgg/data && \
-    mkdir -p /var/www/html/elgg/elgg-config && \
-    chown -R www-data:www-data /var/www/html/elgg
-
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copy only necessary files for initial build
-COPY composer.json composer.lock /var/www/html/elgg/
-COPY .htaccess /var/www/html/elgg/
+# Set working directory
+WORKDIR /var/www/html/elgg
 
-# Install dependencies
-RUN cd /var/www/html/elgg && \
-    composer install --no-dev --no-scripts --no-progress --optimize-autoloader
+# Copy composer files and install dependencies first (better caching)
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-progress --optimize-autoloader
 
-# Copy remaining application files
+# Copy Elgg source code
 COPY . /var/www/html/elgg
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/elgg && \
-    find /var/www/html/elgg -type d -exec chmod 755 {} \; && \
-    find /var/www/html/elgg -type f -exec chmod 644 {} \; && \
-    chmod -R 775 /var/www/html/elgg/data /var/www/html/elgg/elgg-config
+# Create data & config directories (mount points for PVCs)
+RUN mkdir -p /var/www/html/data \
+    && mkdir -p /var/www/html/elgg/elgg-config
+
+# Set permissions for runtime
+RUN chown -R www-data:www-data /var/www/html/elgg /var/www/html/data \
+    && chmod -R 775 /var/www/html/elgg/elgg-config /var/www/html/data
+
+# These will be replaced by PVCs in Kubernetes
+VOLUME ["/var/www/html/data", "/var/www/html/elgg/elgg-config"]
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s \
