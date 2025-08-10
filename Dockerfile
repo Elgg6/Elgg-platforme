@@ -193,12 +193,12 @@ COPY . /var/www/html/elgg
 RUN composer install --no-dev --prefer-dist
 
 # Copy entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Ensure Apache runs as www-data
 RUN chown -R www-data:www-data /var/www/html/elgg
 
 EXPOSE 80
-ENTRYPOINT ["docker-entrypoint.sh"]
+# ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
