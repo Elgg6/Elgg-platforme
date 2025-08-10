@@ -158,10 +158,9 @@
 # CMD ["apache2-foreground"]
 ########################################################################################################################
 
-
 FROM php:8.2-apache
 
-# Install PHP extensions required by Elgg
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
@@ -172,10 +171,8 @@ RUN apt-get update && apt-get install -y \
     git \
     netcat-openbsd \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd mysqli zip opcache
-
-# Enable Apache mod_rewrite for Elgg
-RUN a2enmod rewrite
+    && docker-php-ext-install gd mysqli zip opcache \
+    && a2enmod rewrite
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -183,20 +180,19 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html/elgg
 
-# Copy Elgg project files into the container
+# Copy Elgg project files
 COPY . /var/www/html/elgg
 
 # Install PHP dependencies
 RUN composer install --no-dev --prefer-dist
 
-# Set proper permissions for Elgg config and data directory
-RUN mkdir -p /var/www/html/elgg/elgg-config \
-    && mkdir -p /var/www/html/elgg-data \
-    && chown -R www-data:www-data /var/www/html/elgg \
-    && chmod -R 770 /var/www/html/elgg-data
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Expose HTTP port
+# Ensure Apache runs as www-data
+RUN chown -R www-data:www-data /var/www/html/elgg
+
 EXPOSE 80
-
-# Start Apache
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
