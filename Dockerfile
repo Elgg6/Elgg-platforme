@@ -180,6 +180,12 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html/elgg
 
+# Install required PHP extensions
+RUN apt-get update && apt-get install -y libicu-dev \
+    && docker-php-ext-install intl \
+    && docker-php-ext-enable intl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy Elgg project files
 COPY . /var/www/html/elgg
 
