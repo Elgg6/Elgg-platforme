@@ -174,6 +174,24 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install gd mysqli zip opcache \
     && a2enmod rewrite
 
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu && \
+    docker-php-ext-install -j$(nproc) \
+        mysqli \
+        pdo_mysql \
+        xml \
+        mbstring \
+        curl \
+        zip \
+        intl \
+        gd \
+        soap \
+        bcmath \
+        opcache \
+        ldap \
+        xsl
+
 
 # Change Apache DocumentRoot to /var/www/html/elgg
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/elgg|g' /etc/apache2/sites-available/000-default.conf
