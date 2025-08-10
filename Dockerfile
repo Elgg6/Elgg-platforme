@@ -71,88 +71,132 @@
 # CMD ["apache2-foreground"]
 ######################################################################################################################
 
-FROM php:8.1-apache
+# FROM php:8.1-apache
 
-# Install system dependencies
+# # Install system dependencies
+# RUN apt-get update && apt-get install -y \
+#     git \
+#     unzip \
+#     curl \
+#     libzip-dev \
+#     libonig-dev \
+#     libxml2-dev \
+#     libldap2-dev \
+#     libpng-dev \
+#     libjpeg-dev \
+#     libfreetype6-dev \
+#     libicu-dev \
+#     libcurl4-openssl-dev \
+#     libssl-dev \
+#     libxslt-dev \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Configure and install PHP extensions
+# RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+#     docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu && \
+#     docker-php-ext-install -j$(nproc) \
+#         mysqli \
+#         pdo_mysql \
+#         xml \
+#         mbstring \
+#         curl \
+#         zip \
+#         intl \
+#         gd \
+#         soap \
+#         bcmath \
+#         opcache \
+#         ldap \
+#         xsl
+
+# # Enable Apache modules and configure
+# RUN a2enmod rewrite headers expires && \
+#     echo "<VirtualHost *:80>\n\
+#         DocumentRoot /var/www/html/elgg\n\
+#         <Directory /var/www/html/elgg>\n\
+#             Options -Indexes +FollowSymLinks\n\
+#             AllowOverride All\n\
+#             Require all granted\n\
+#         </Directory>\n\
+#         ErrorLog \${APACHE_LOG_DIR}/error.log\n\
+#         CustomLog \${APACHE_LOG_DIR}/access.log combined\n\
+#     </VirtualHost>" > /etc/apache2/sites-available/000-default.conf
+
+# # Install Composer
+# RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# # Set working directory
+# WORKDIR /var/www/html/elgg
+
+# # Copy composer files and install dependencies first (better caching)
+# COPY composer.json composer.lock ./
+# RUN composer install --no-dev --no-scripts --no-progress --optimize-autoloader
+
+# # Copy only necessary files (exclude development files)
+# COPY . .
+
+# # Create directories that will be mounted as volumes
+# RUN mkdir -p /var/www/html/data \
+#     && mkdir -p /var/www/html/elgg/elgg-config \
+#     && touch /var/www/html/elgg/elgg-config/settings.php
+
+# # Set permissions
+# RUN chown -R www-data:www-data /var/www/html \
+#     && find /var/www/html -type d -exec chmod 755 {} \; \
+#     && find /var/www/html -type f -exec chmod 644 {} \; \
+#     && chmod -R 775 /var/www/html/elgg/elgg-config /var/www/html/data
+
+# # Clean up unnecessary files
+# RUN rm -rf /var/www/html/elgg/install/config/ \
+#     && rm -f Dockerfile README.md *.sh
+
+# # Health check
+# HEALTHCHECK --interval=30s --timeout=3s \
+#     CMD curl -f http://localhost/ || exit 1
+
+# EXPOSE 80
+# CMD ["apache2-foreground"]
+########################################################################################################################
+
+
+FROM php:8.2-apache
+
+# Install PHP extensions required by Elgg
 RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    curl \
-    libzip-dev \
-    libonig-dev \
-    libxml2-dev \
-    libldap2-dev \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
-    libicu-dev \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    libxslt-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    netcat-openbsd \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd mysqli zip opcache
 
-# Configure and install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
-    docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu && \
-    docker-php-ext-install -j$(nproc) \
-        mysqli \
-        pdo_mysql \
-        xml \
-        mbstring \
-        curl \
-        zip \
-        intl \
-        gd \
-        soap \
-        bcmath \
-        opcache \
-        ldap \
-        xsl
-
-# Enable Apache modules and configure
-RUN a2enmod rewrite headers expires && \
-    echo "<VirtualHost *:80>\n\
-        DocumentRoot /var/www/html/elgg\n\
-        <Directory /var/www/html/elgg>\n\
-            Options -Indexes +FollowSymLinks\n\
-            AllowOverride All\n\
-            Require all granted\n\
-        </Directory>\n\
-        ErrorLog \${APACHE_LOG_DIR}/error.log\n\
-        CustomLog \${APACHE_LOG_DIR}/access.log combined\n\
-    </VirtualHost>" > /etc/apache2/sites-available/000-default.conf
+# Enable Apache mod_rewrite for Elgg
+RUN a2enmod rewrite
 
 # Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html/elgg
 
-# Copy composer files and install dependencies first (better caching)
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-progress --optimize-autoloader
+# Copy Elgg project files into the container
+COPY . /var/www/html/elgg
 
-# Copy only necessary files (exclude development files)
-COPY . .
+# Install PHP dependencies
+RUN composer install --no-dev --prefer-dist
 
-# Create directories that will be mounted as volumes
-RUN mkdir -p /var/www/html/data \
-    && mkdir -p /var/www/html/elgg/elgg-config \
-    && touch /var/www/html/elgg/elgg-config/settings.php
+# Set proper permissions for Elgg config and data directory
+RUN mkdir -p /var/www/html/elgg/elgg-config \
+    && mkdir -p /var/www/html/elgg-data \
+    && chown -R www-data:www-data /var/www/html/elgg \
+    && chmod -R 770 /var/www/html/elgg-data
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && find /var/www/html -type d -exec chmod 755 {} \; \
-    && find /var/www/html -type f -exec chmod 644 {} \; \
-    && chmod -R 775 /var/www/html/elgg/elgg-config /var/www/html/data
-
-# Clean up unnecessary files
-RUN rm -rf /var/www/html/elgg/install/config/ \
-    && rm -f Dockerfile README.md *.sh
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s \
-    CMD curl -f http://localhost/ || exit 1
-
+# Expose HTTP port
 EXPOSE 80
+
+# Start Apache
 CMD ["apache2-foreground"]
