@@ -174,6 +174,18 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install gd mysqli zip opcache \
     && a2enmod rewrite
 
+
+# Change Apache DocumentRoot to /var/www/html/elgg
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/elgg|g' /etc/apache2/sites-available/000-default.conf
+
+# Allow .htaccess overrides and access permissions
+RUN echo '<Directory /var/www/html/elgg>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' > /etc/apache2/conf-available/elgg.conf && \
+    a2enconf elgg
+
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -195,6 +207,12 @@ RUN composer install --no-dev --prefer-dist
 # Copy entrypoint script
 # COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 # RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Fix permissions on Elgg files and folders
+RUN chown -R www-data:www-data /var/www/html/elgg && \
+    find /var/www/html/elgg -type d -exec chmod 755 {} \; && \
+    find /var/www/html/elgg -type f -exec chmod 644 {} \;
+
 
 # Ensure Apache runs as www-data
 RUN chown -R www-data:www-data /var/www/html/elgg
