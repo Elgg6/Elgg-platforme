@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "local-path"
+  volumeName: db-pv
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elgg-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "local-path"
+  volumeName: elgg-pv
+  #local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elgg-config-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "local-path"
+  volumeName: elgg-config-pv
+  resources:
+    requests:
+      storage: 5Gi
