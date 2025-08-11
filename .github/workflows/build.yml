@@ -31,7 +31,7 @@ env:
   # ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
 jobs:
   docker-build:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'recette'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -95,8 +95,8 @@ jobs:
     steps:
       - name: Wait for ArgoCD deployment to finish
         run: |
-          echo "Waiting 60 seconds for ArgoCD to sync and deploy..."
-          sleep 60
+          echo "Waiting 30 seconds for ArgoCD to sync and deploy..."
+          sleep 30
 
       - name: Wait for elgg-app to be ready on masternode
         uses: appleboy/ssh-action@v1
