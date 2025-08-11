@@ -5,7 +5,6 @@ permissions:
   pull-requests: write  # Required to detect PR status
 
 on:
-  push:
     pull_request:
       types: [closed]
 
