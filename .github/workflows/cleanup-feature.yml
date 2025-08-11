@@ -6,14 +6,12 @@ permissions:
 
 on:
   push:
-    branches:
-      - dev
-  #pull_request:
-    #types: [closed]
+    pull_request:
+      types: [closed]
 
 jobs:
   delete-merged-branch:
-    #if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Extract branch name
