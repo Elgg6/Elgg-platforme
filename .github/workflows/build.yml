@@ -2,9 +2,9 @@ name: Deploy To Self Managed Cluster
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - recette
+  #push:
+    #branches:
+      #- recette
   pull_request:
     branches:
       - recette
@@ -30,7 +30,7 @@ env:
   # ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
 jobs:
   docker-build:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -88,7 +88,8 @@ jobs:
 
 
   extract-url:
-    if: github.event_name == 'push'
+    #if: github.event_name == 'push'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
     #needs: docker-build
     runs-on: [self-hosted, Linux, X64]
     steps:
@@ -130,7 +131,7 @@ jobs:
           path: elgg-url.txt
 
   security-scan:
-    if: github.event_name == 'push'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
     needs: extract-url
     runs-on: ubuntu-latest
     permissions:
@@ -172,7 +173,7 @@ jobs:
           
 
   quality-gate:
-    if: github.event_name == 'push'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
     needs: security-scan
     runs-on: ubuntu-latest
     permissions:
