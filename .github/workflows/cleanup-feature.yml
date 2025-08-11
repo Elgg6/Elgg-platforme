@@ -1,8 +1,8 @@
 name: Auto-delete feature branches
 
 permissions:
-  contents: write  # Required for branch deletion
-  pull-requests: write  # Required to detect PR status
+  contents: write
+  pull-requests: write
 
 on:
     pull_request:
