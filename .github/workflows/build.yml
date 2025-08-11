@@ -90,7 +90,7 @@ jobs:
 
   extract-url:
     if: github.event_name == 'push'
-    needs: docker-build
+    #needs: docker-build
     runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Wait for ArgoCD deployment to finish
@@ -183,7 +183,7 @@ jobs:
 
   quality-gate:
     if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'master'
-    needs: [docker-build, security-scan]
+    #needs: [docker-build, security-scan]
     runs-on: ubuntu-latest
     permissions:
       contents: read
