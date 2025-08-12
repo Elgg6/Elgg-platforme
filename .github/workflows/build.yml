@@ -6,6 +6,7 @@ on:
     #branches:
       #- recette
   pull_request:
+    types: [closed]
     branches:
       - recette
 
