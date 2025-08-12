@@ -54,10 +54,10 @@ spec:
       volumes:
       - name: elgg-data
         persistentVolumeClaim:
-          claimName: elgg-pvc
+          claimName: elgg-pvc-prod
       - name: elgg-config
         persistentVolumeClaim:
-          claimName: elgg-config-pvc
+          claimName: elgg-config-pvc-prod
 
 ---
 apiVersion: v1
