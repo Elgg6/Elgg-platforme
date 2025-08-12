@@ -35,7 +35,7 @@ spec:
       volumes:
       - name: db-data
         persistentVolumeClaim:
-          claimName: db-pvc
+          claimName: db-pvc-prod
 
 ---
 apiVersion: v1
