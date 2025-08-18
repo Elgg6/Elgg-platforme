@@ -62,6 +62,8 @@ jobs:
         run: |
           if [ -d "mod" ]; then
             echo 'Checking language files in mod directory...'
-            ! find mod/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8" | grep -v "charset=us-ascii" || exit 1
+            find mod/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8" | grep -v "charset=us-ascii" && exit 0 || exit 1
           else
             echo "No mod directory found for language checks"
+          fi
+        shell: bash
