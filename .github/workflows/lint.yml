@@ -43,6 +43,7 @@ jobs:
             vendor/bin/phpcs --standard=phpcs.xml -sp mod
           else
             echo "::warning::No mod directory found for PHPCS checks"
+          fi
 
   languages_lint:
     name: Validate language files encoding
@@ -58,3 +59,4 @@ jobs:
             ! find mod/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8" | grep -v "charset=us-ascii" || exit 1
           else
             echo "No mod directory found for language checks"
+          fi
