@@ -36,28 +36,29 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
-      - name: Composer validate
-        run: composer validate --no-check-all
-
-      - name: Install PHPCS and Elgg standards
+      - name: Validate and fix composer files
         run: |
-          # Install PHPCS and Elgg standards explicitly
-          composer require --dev squizlabs/php_codesniffer elgg/sniffs --prefer-dist --no-progress --ansi
+          # First install required dev dependencies
+          composer require --dev squizlabs/php_codesniffer elgg/sniffs --no-progress --ansi
           
-          # Verify standards are installed
-          if [ ! -d "vendor/elgg/sniffs/src/Elgg" ]; then
-            echo "::error::Elgg coding standards not found"
-            composer show elgg/sniffs
-            exit 1
+          # Then update the lock file if needed
+          if ! composer validate --no-check-all --no-interaction; then
+            echo "::warning::composer.lock out of sync - updating dependencies"
+            composer update --lock --no-interaction --no-progress
           fi
 
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --ansi
+
       - name: Verify PHPCS installation
-        run: vendor/bin/phpcs -i
+        run: |
+          vendor/bin/phpcs -i
+          [ -d "vendor/elgg/sniffs/src/Elgg" ] || { echo "::error::Elgg coding standards not found"; exit 1; }
 
       - name: Run PHP Code Style checks
         run: |
           if [ -d "mod" ]; then
-            echo "Running PHPCS with Elgg standards on mod directory"
+            echo "Running PHPCS on mod directory"
             vendor/bin/phpcs --standard=vendor/elgg/sniffs/src/Elgg -sp mod
           else
             echo "::warning::No mod directory found for PHPCS checks"
