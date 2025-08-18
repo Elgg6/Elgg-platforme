@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<ruleset name="Elgg">
+    <description>Elgg Coding Standards</description>
+
+    <!-- Use Elgg sniffs -->
+    <rule ref="./vendor/elgg/sniffs/src/Elgg"/>
+
+    <!-- Skip PHPUnit test files -->
+    <exclude-pattern>*/tests/phpunit/*</exclude-pattern>
+
+    <!-- Optional: Skip specific directories -->
+    <exclude-pattern>vendor/*</exclude-pattern>
+
+    <!-- Report format -->
+    <arg name="report" value="full"/>
+</ruleset>

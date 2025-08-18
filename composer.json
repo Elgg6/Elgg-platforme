@@ -12,7 +12,7 @@
 		"phpunit/phpunit": "~10.5",
 		"phpdocumentor/reflection-docblock": "^5.2",
 		"squizlabs/php_codesniffer": "^3.13",
-    		"elgg/sniffs": "^0.1.0"
+    		"elgg/sniffs": "4.x-dev"
 	},
 	"scripts": {
 		"post-install-cmd": "\\Elgg\\Composer\\PostInstall::execute",
