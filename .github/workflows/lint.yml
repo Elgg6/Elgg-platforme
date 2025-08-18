@@ -1,5 +1,6 @@
 name: Lint checks
 on: [pull_request]
+
 permissions:
   contents: read
   actions: write
@@ -14,7 +15,10 @@ jobs:
     name: Validate composer.json and PHP Coding style
     runs-on: ubuntu-latest
     steps:
-      - name: Install PHP
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
@@ -22,31 +26,22 @@ jobs:
           extensions: gd,pdo,xml,json,mysqli,pdo_mysql,intl
           tools: composer:v2
 
-      - name: Code checkout
-        uses: actions/checkout@v4
-
-      - name: Clean install dependencies
+      - name: Install dependencies
         run: |
-          # Clean slate installation
-          rm -rf vendor
           composer install --prefer-dist --no-progress --ansi --no-interaction
-          
-          # Ensure standards are installed
           composer require --dev squizlabs/php_codesniffer elgg/sniffs --prefer-dist --no-progress --ansi --no-interaction
 
       - name: Register Elgg coding standard
         run: |
-          # Create phpcs.xml config file
+          vendor/bin/phpcs --config-set installed_paths $(pwd)/vendor/elgg/sniffs/src
+          vendor/bin/phpcs -i
+          # Create PHPCS ruleset
           cat > phpcs.xml <<EOL
           <?xml version="1.0"?>
           <ruleset name="Elgg">
             <rule ref="./vendor/elgg/sniffs/src/Elgg"/>
           </ruleset>
           EOL
-          
-          # Verify installation
-          vendor/bin/phpcs --config-set installed_paths $(pwd)/vendor/elgg/sniffs/src
-          vendor/bin/phpcs -i
 
       - name: Run PHP Code Style checks
         run: |
@@ -55,7 +50,6 @@ jobs:
             vendor/bin/phpcs --standard=phpcs.xml -sp mod
           else
             echo "::warning::No mod directory found for PHPCS checks"
-          fi
 
   languages_lint:
     name: Validate language files are UTF-8 encoded
@@ -64,11 +58,10 @@ jobs:
       - name: Code checkout
         uses: actions/checkout@v4
 
-      - name: Check encoding of Plugin language files
+      - name: Check encoding of plugin language files
         run: |
           if [ -d "mod" ]; then
             echo 'Checking language files in mod directory...'
             ! find mod/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8" | grep -v "charset=us-ascii" || exit 1
           else
             echo "No mod directory found for language checks"
-          fi
