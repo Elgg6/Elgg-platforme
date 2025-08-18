@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: read
+  contents: write
   actions: write
   pull-requests: write
   issues: write
@@ -38,6 +39,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.MYGITHUB_SECRET }}
       
       - name: Update image in Kubernetes manifests
         run: |
@@ -50,7 +53,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add k8s-rancher/elgg-app.yml prod-deployment/elgg-app.yml
           git commit -m "chore: update image to ${{ env.IMAGE_TAG }}" || echo "No changes to commit"
-          git push origin feature
+          git push origin HEAD:${{ github.ref_name }}
 
 
   docker-build:
