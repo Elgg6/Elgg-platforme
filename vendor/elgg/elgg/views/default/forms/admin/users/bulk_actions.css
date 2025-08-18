@@ -1,6 +1,0 @@
-.elgg-admin-users {
-	td + td,
-	th + th {
-		white-space: nowrap;
-	}
-}
