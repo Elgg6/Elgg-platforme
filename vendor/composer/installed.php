@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'elgg/starter-project',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => 'fe84965f52c24089bede8f736fd81fbb13835ee4',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -125,9 +125,9 @@
             'dev_requirement' => false,
         ),
         'elgg/starter-project' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => 'fe84965f52c24089bede8f736fd81fbb13835ee4',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
