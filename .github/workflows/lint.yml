@@ -39,12 +39,15 @@ jobs:
       - name: Composer validate
         run: composer validate --no-check-all
 
-      - name: Composer install with dev dependencies
+      - name: Install PHPCS and dependencies
         run: |
-          composer install --prefer-dist --no-progress --no-interaction --ansi --dev
-          # Verify PHPCS is installed
+          # Install dev dependencies explicitly
+          composer require --dev elgg/sniffs squizlabs/php_codesniffer --prefer-dist --no-progress --ansi
+          
+          # Verify installation
           if [ ! -f "vendor/bin/phpcs" ]; then
-            echo "::error::PHP CodeSniffer not found. Check if elgg/sniffs is in your composer.json"
+            echo "::error::PHP CodeSniffer installation failed"
+            composer show | grep php_codesniffer
             exit 1
           fi
 
