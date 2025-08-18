@@ -20,14 +20,15 @@ jobs:
           php-version: '8.1'
           coverage: none
           extensions: gd,pdo,xml,json,mysqli,pdo_mysql,intl
-      
+          tools: composer:v2
+
       - name: Code checkout
         uses: actions/checkout@v4
-      
+
       - name: Get Composer Cache Directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> ${GITHUB_OUTPUT}
-        
+
       - name: Restore Composer Cache
         uses: actions/cache@v4
         with:
@@ -36,14 +37,21 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Composer validate
-        run: composer validate
-        
-      - name: Composer install
+        run: composer validate --strict
+
+      - name: Composer install with dev dependencies
         run: |
-          composer install
-          
-      - name: PHP Code Style checks
-        run: vendor/bin/phpcs --standard=vendor/elgg/sniffs/src/Elgg -sp engine/classes engine/lib actions mod views
+          composer install --prefer-dist --no-progress --no-interaction --ansi --dev
+          # Verify PHPCS is installed
+          if [ ! -f "vendor/bin/phpcs" ]; then
+            echo "::error::PHP CodeSniffer not found. Check if elgg/sniffs is in your composer.json"
+            exit 1
+          fi
+
+      - name: Run PHP Code Style checks
+        run: |
+          vendor/bin/phpcs --version
+          vendor/bin/phpcs --standard=vendor/elgg/sniffs/src/Elgg -sp engine/classes engine/lib actions mod views
 
   languages_lint:
     name: Validate language files are UTF-8 encoded
@@ -53,10 +61,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check encoding of Core language files
-        run: echo '! find ./languages/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8$" | grep -v "charset=us-ascii$"' | bash
+        run: |
+          if [ -d "./languages/" ]; then
+            echo '! find ./languages/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8$" | grep -v "charset=us-ascii$"' | bash
+          else
+            echo "No core language files found"
+          fi
 
       - name: Check encoding of Installation language files
-        run: echo '! find ./install/languages/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8$" | grep -v "charset=us-ascii$"' | bash
+        run: |
+          if [ -d "./install/languages/" ]; then
+            echo '! find ./install/languages/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8$" | grep -v "charset=us-ascii$"' | bash
+          else
+            echo "No installation language files found"
+          fi
 
       - name: Check encoding of Plugin language files
-        run: echo '! find ./mod/*/languages/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8$" | grep -v "charset=us-ascii$"' | bash
+        run: |
+          if [ -d "./mod/" ]; then
+            echo '! find ./mod/*/languages/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8$" | grep -v "charset=us-ascii$"' | bash
+          else
+            echo "No plugin language files found"
+          fi
