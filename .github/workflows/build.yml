@@ -182,7 +182,7 @@ jobs:
           echo "elgg-url=$(cat elgg-url.txt)" >> $GITHUB_ENV
   
       - name: Run Quick Security Scan (ZAP)
-        uses: action-full-scan@v0.12.0
+        uses: zaproxy/action-full-scan@v0.12.0
         with:
           target: ${{ env.elgg-url }}
           cmd_options: '-T 5 -z "-config api.disablekey=true"'
