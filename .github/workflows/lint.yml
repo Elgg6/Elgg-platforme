@@ -39,20 +39,25 @@ jobs:
       - name: Composer validate
         run: composer validate --no-check-all
 
-      - name: Install dependencies
+      - name: Install PHPCS and Elgg standards
         run: |
-          composer install --prefer-dist --no-progress --ansi
-          if [ ! -f "vendor/bin/phpcs" ]; then
-            echo "::error::PHP CodeSniffer not found. Installing..."
-            composer require --dev elgg/sniffs squizlabs/php_codesniffer --prefer-dist --no-progress --ansi
+          # Install PHPCS and Elgg standards explicitly
+          composer require --dev squizlabs/php_codesniffer elgg/sniffs --prefer-dist --no-progress --ansi
+          
+          # Verify standards are installed
+          if [ ! -d "vendor/elgg/sniffs/src/Elgg" ]; then
+            echo "::error::Elgg coding standards not found"
+            composer show elgg/sniffs
+            exit 1
           fi
+
+      - name: Verify PHPCS installation
+        run: vendor/bin/phpcs -i
 
       - name: Run PHP Code Style checks
         run: |
-          vendor/bin/phpcs --version
-          # Check only existing directories
           if [ -d "mod" ]; then
-            echo "Running PHPCS on mod directory"
+            echo "Running PHPCS with Elgg standards on mod directory"
             vendor/bin/phpcs --standard=vendor/elgg/sniffs/src/Elgg -sp mod
           else
             echo "::warning::No mod directory found for PHPCS checks"
