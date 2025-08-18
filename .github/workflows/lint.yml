@@ -25,41 +25,34 @@ jobs:
       - name: Code checkout
         uses: actions/checkout@v4
 
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> ${GITHUB_OUTPUT}
-
-      - name: Restore Composer Cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-
-      - name: Validate and fix composer files
+      - name: Clean install dependencies
         run: |
-          # First install required dev dependencies
-          composer require --dev squizlabs/php_codesniffer elgg/sniffs --no-progress --ansi
+          # Clean slate installation
+          rm -rf vendor
+          composer install --prefer-dist --no-progress --ansi --no-interaction
           
-          # Then update the lock file if needed
-          if ! composer validate --no-check-all --no-interaction; then
-            echo "::warning::composer.lock out of sync - updating dependencies"
-            composer update --lock --no-interaction --no-progress
-          fi
+          # Ensure standards are installed
+          composer require --dev squizlabs/php_codesniffer elgg/sniffs --prefer-dist --no-progress --ansi --no-interaction
 
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --ansi
-
-      - name: Verify PHPCS installation
+      - name: Register Elgg coding standard
         run: |
+          # Create phpcs.xml config file
+          cat > phpcs.xml <<EOL
+          <?xml version="1.0"?>
+          <ruleset name="Elgg">
+            <rule ref="./vendor/elgg/sniffs/src/Elgg"/>
+          </ruleset>
+          EOL
+          
+          # Verify installation
+          vendor/bin/phpcs --config-set installed_paths $(pwd)/vendor/elgg/sniffs/src
           vendor/bin/phpcs -i
-          [ -d "vendor/elgg/sniffs/src/Elgg" ] || { echo "::error::Elgg coding standards not found"; exit 1; }
 
       - name: Run PHP Code Style checks
         run: |
           if [ -d "mod" ]; then
-            echo "Running PHPCS on mod directory"
-            vendor/bin/phpcs --standard=vendor/elgg/sniffs/src/Elgg -sp mod
+            echo "Running PHPCS using Elgg standards"
+            vendor/bin/phpcs --standard=phpcs.xml -sp mod
           else
             echo "::warning::No mod directory found for PHPCS checks"
           fi

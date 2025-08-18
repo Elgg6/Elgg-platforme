@@ -6,5 +6,6 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Elgg_Sniffs_' => array($vendorDir . '/elgg/sniffs/src'),
     'CssCrush' => array($vendorDir . '/css-crush/css-crush/lib'),
 );

@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit72fefe66c4dd87e9702d5bc789a04f34
+class ComposerStaticInit00292bb4764945f6fcce4f8be9cfb9ea
 {
     public static $files = array (
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
@@ -434,6 +434,13 @@ class ComposerStaticInit72fefe66c4dd87e9702d5bc789a04f34
     );
 
     public static $prefixesPsr0 = array (
+        'E' => 
+        array (
+            'Elgg_Sniffs_' => 
+            array (
+                0 => __DIR__ . '/..' . '/elgg/sniffs/src',
+            ),
+        ),
         'C' => 
         array (
             'CssCrush' => 
@@ -1724,6 +1731,15 @@ class ComposerStaticInit72fefe66c4dd87e9702d5bc789a04f34
         'Elgg\\Widgets\\CreateDefaultWidgetsHandler' => __DIR__ . '/..' . '/elgg/elgg/engine/classes/Elgg/Widgets/CreateDefaultWidgetsHandler.php',
         'Elgg\\Widgets\\DefaultWidgetsContainerPermissionsHandler' => __DIR__ . '/..' . '/elgg/elgg/engine/classes/Elgg/Widgets/DefaultWidgetsContainerPermissionsHandler.php',
         'Elgg\\Widgets\\EntityUrlHandler' => __DIR__ . '/..' . '/elgg/elgg/engine/classes/Elgg/Widgets/EntityUrlHandler.php',
+        'Elgg_Sniffs_Commenting_ClassCommentSniff' => __DIR__ . '/..' . '/elgg/sniffs/src/Elgg/Sniffs/Commenting/ClassCommentSniff.php',
+        'Elgg_Sniffs_Commenting_FunctionCommentSniff' => __DIR__ . '/..' . '/elgg/sniffs/src/Elgg/Sniffs/Commenting/FunctionCommentSniff.php',
+        'Elgg_Sniffs_Files_LineLengthSniff' => __DIR__ . '/..' . '/elgg/sniffs/src/Elgg/Sniffs/Files/LineLengthSniff.php',
+        'Elgg_Sniffs_Functions_FunctionDeclarationArgumentSpacingSniff' => __DIR__ . '/..' . '/elgg/sniffs/src/Elgg/Sniffs/Functions/FunctionDeclarationArgumentSpacingSniff.php',
+        'Elgg_Sniffs_NamingConventions_ValidFunctionNameSniff' => __DIR__ . '/..' . '/elgg/sniffs/src/Elgg/Sniffs/NamingConventions/ValidFunctionNameSniff.php',
+        'Elgg_Sniffs_Strings_ConcatenationSpacingSniff' => __DIR__ . '/..' . '/elgg/sniffs/src/Elgg/Sniffs/Strings/ConcatenationSpacingSniff.php',
+        'Elgg_Sniffs_WhiteSpace_DisallowSpaceByParenthesesSniff' => __DIR__ . '/..' . '/elgg/sniffs/src/Elgg/Sniffs/WhiteSpace/DisallowSpaceByParenthesesSniff.php',
+        'Elgg_Sniffs_WhiteSpace_DisallowSpaceIndentSniff' => __DIR__ . '/..' . '/elgg/sniffs/src/Elgg/Sniffs/WhiteSpace/DisallowSpaceIndentSniff.php',
+        'Elgg_Sniffs_WhiteSpace_ScopeIndentSniff' => __DIR__ . '/..' . '/elgg/sniffs/src/Elgg/Sniffs/WhiteSpace/ScopeIndentSniff.php',
         'Eloquent\\Composer\\Configuration\\ConfigurationReader' => __DIR__ . '/..' . '/eloquent/composer-config-reader/src/ConfigurationReader.php',
         'Eloquent\\Composer\\Configuration\\ConfigurationValidator' => __DIR__ . '/..' . '/eloquent/composer-config-reader/src/ConfigurationValidator.php',
         'Eloquent\\Composer\\Configuration\\Element\\AbstractRepository' => __DIR__ . '/..' . '/eloquent/composer-config-reader/src/Element/AbstractRepository.php',
@@ -5664,10 +5680,10 @@ class ComposerStaticInit72fefe66c4dd87e9702d5bc789a04f34
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit72fefe66c4dd87e9702d5bc789a04f34::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit72fefe66c4dd87e9702d5bc789a04f34::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit72fefe66c4dd87e9702d5bc789a04f34::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInit72fefe66c4dd87e9702d5bc789a04f34::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit00292bb4764945f6fcce4f8be9cfb9ea::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit00292bb4764945f6fcce4f8be9cfb9ea::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit00292bb4764945f6fcce4f8be9cfb9ea::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit00292bb4764945f6fcce4f8be9cfb9ea::$classMap;
 
         }, null, ClassLoader::class);
     }
