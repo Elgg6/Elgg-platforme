@@ -12,36 +12,29 @@ permissions:
 
 jobs:
   php_lint:
-    name: Validate composer.json and PHP Coding style
+    name: Validate PHP code and composer.json
     runs-on: ubuntu-latest
     steps:
-      - name: Code checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up PHP
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
-          coverage: none
           extensions: gd,pdo,xml,json,mysqli,pdo_mysql,intl
           tools: composer:v2
 
       - name: Install dependencies
         run: |
           composer install --prefer-dist --no-progress --ansi --no-interaction
-          composer require --dev squizlabs/php_codesniffer elgg/sniffs --prefer-dist --no-progress --ansi --no-interaction
+
+          # Ensure coding standards installed
+          composer require --dev squizlabs/php_codesniffer:^3.13 elgg/sniffs:4.x-dev --prefer-dist --no-progress --ansi --no-interaction
 
       - name: Register Elgg coding standard
         run: |
-          vendor/bin/phpcs --config-set installed_paths $(pwd)/vendor/elgg/sniffs/src
-          vendor/bin/phpcs -i
-          # Create PHPCS ruleset
-          cat > phpcs.xml <<EOL
-          <?xml version="1.0"?>
-          <ruleset name="Elgg">
-            <rule ref="./vendor/elgg/sniffs/src/Elgg"/>
-          </ruleset>
-          EOL
+          vendor/bin/phpcs --config-set installed_paths vendor/elgg/sniffs/src
 
       - name: Run PHP Code Style checks
         run: |
@@ -52,18 +45,16 @@ jobs:
             echo "::warning::No mod directory found for PHPCS checks"
 
   languages_lint:
-    name: Validate language files are UTF-8 encoded
+    name: Validate language files encoding
     runs-on: ubuntu-latest
     steps:
-      - name: Code checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Check encoding of plugin language files
         run: |
           if [ -d "mod" ]; then
             echo 'Checking language files in mod directory...'
-            find mod/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8" | grep -v "charset=us-ascii" && exit 0 || exit 1
+            ! find mod/ -name "*.php" -type f -exec file --mime {} \; | grep -v "charset=utf-8" | grep -v "charset=us-ascii" || exit 1
           else
             echo "No mod directory found for language checks"
-          fi
-        shell: bash
