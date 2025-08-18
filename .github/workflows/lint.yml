@@ -1,0 +1,64 @@
+name: Lint checks
+on: [pull_request]
+
+permissions:
+  contents: read
+  actions: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  security-events: write
+  packages: write
+
+jobs:
+  php_lint:
+    name: Validate PHP code and composer.json
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: gd,pdo,xml,json,mysqli,pdo_mysql,intl
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: |
+          composer install --prefer-dist --no-progress --ansi --no-interaction
+
+          # Ensure coding standards installed
+          composer require --dev squizlabs/php_codesniffer:^3.13 elgg/sniffs:4.x-dev --prefer-dist --no-progress --ansi --no-interaction
+
+      - name: Register Elgg coding standard
+        run: |
+          vendor/bin/phpcs --config-set installed_paths vendor/elgg/sniffs/src
+
+
+      - name: Run PHP Code Style checks
+        run: |
+          if [ -d "mod" ]; then
+            echo "Running PHPCS using Elgg standards"
+            vendor/bin/phpcs --standard=phpcs.xml -sp mod || true
+          else
+            echo "::warning::No mod directory found for PHPCS checks"
+          fi
+
+  languages_lint:
+    name: Validate language files encoding
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check encoding of plugin language files
+        run: |
+          if [ -d "mod" ]; then
+            echo "Checking language files in mod directory..."
+            find mod/ -name "*.php" -type f -exec file --mime {} \; | \
+              grep -v "charset=utf-8" | grep -v "charset=us-ascii" || true
+          else
+            echo "::warning::No mod directory found for language checks"
+          fi
