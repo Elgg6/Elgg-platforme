@@ -31,7 +31,7 @@ spec:
 
       containers:
       - name: elgg-app
-        image: bitaouioussama/elgg-app:v10
+        image: bitaouioussama/elgg-app:v11
         imagePullPolicy: Always
         envFrom:
           - secretRef:
