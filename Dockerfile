@@ -162,23 +162,30 @@ FROM php:8.2-apache
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    libpng-dev libjpeg-dev libfreetype6-dev libzip-dev zip unzip git netcat-openbsd libicu-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    netcat-openbsd \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd mysqli pdo pdo_mysql zip opcache intl \
-    && docker-php-ext-enable intl \
-    && a2enmod rewrite \
-    && rm -rf /var/lib/apt/lists/*
+    && docker-php-ext-install gd mysqli zip opcache \
+    && docker-php-ext-install gd mysqli pdo pdo_mysql zip opcache \
+    && a2enmod rewrite
 
-# Change DocumentRoot
+
+# Change Apache DocumentRoot to /var/www/html/elgg
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/elgg|g' /etc/apache2/sites-available/000-default.conf
 
-# Allow .htaccess
+# Allow .htaccess overrides and access permissions
 RUN echo '<Directory /var/www/html/elgg>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
-</Directory>' > /etc/apache2/conf-available/elgg.conf \
-    && a2enconf elgg
+</Directory>' > /etc/apache2/conf-available/elgg.conf && \
+    a2enconf elgg
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -186,16 +193,31 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html/elgg
 
-# Copy project files
+# Install required PHP extensions
+RUN apt-get update && apt-get install -y libicu-dev \
+    && docker-php-ext-install intl \
+    && docker-php-ext-enable intl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Elgg project files
 COPY . /var/www/html/elgg
 
 # Install PHP dependencies
 RUN composer install --no-dev --prefer-dist
 
-# Fix permissions
-RUN chown -R www-data:www-data /var/www/html/elgg \
-    && find /var/www/html/elgg -type d -exec chmod 755 {} \; \
-    && find /var/www/html/elgg -type f -exec chmod 644 {} \;
+# Copy entrypoint script
+# COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Fix permissions on Elgg files and folders
+RUN chown -R www-data:www-data /var/www/html/elgg && \
+    find /var/www/html/elgg -type d -exec chmod 755 {} \; && \
+    find /var/www/html/elgg -type f -exec chmod 644 {} \;
+
+
+# Ensure Apache runs as www-data
+RUN chown -R www-data:www-data /var/www/html/elgg
 
 EXPOSE 80
+# ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
