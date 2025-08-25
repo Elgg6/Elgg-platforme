@@ -175,6 +175,12 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install gd mysqli pdo pdo_mysql zip opcache \
     && a2enmod rewrite
 
+# Enable Apache mod_status for Prometheus Apache Exporter
+RUN a2enmod status && \
+    echo '<Location "/server-status">\n\
+        SetHandler server-status\n\
+        Require all granted\n\
+    </Location>' >> /etc/apache2/sites-available/000-default.conf
 
 # Change Apache DocumentRoot to /var/www/html/elgg
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/elgg|g' /etc/apache2/sites-available/000-default.conf
