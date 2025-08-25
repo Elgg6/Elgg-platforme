@@ -23,7 +23,7 @@ permissions:
 
 env:
   CACHE_KEY: ${{ github.sha }}
-  IMAGE_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/elgg-app:v11
+  IMAGE_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/elgg-app:v12
   OPENVAS_PASSWORD: ${{ secrets.OPENVAS_PASSWORD }}
   KUBECONFIG_PATH: ${{ github.workspace }}/kubeconfig_self_managed.yaml
   # ARGOCD_APP:  myapp-argo-application
@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.MYGITHUB_SECRET }}
-      
+
       - name: Update image in Kubernetes manifests
         run: |
           sed -i "s|image: .*elgg-app:.*|image: ${{ env.IMAGE_TAG }}|" k8s-rancher/elgg-app.yml
