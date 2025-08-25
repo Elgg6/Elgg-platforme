@@ -51,6 +51,15 @@ spec:
         - mountPath: /var/www/html/elgg/elgg-config
           name: elgg-config
 
+      - name: apache-exporter
+        image: lusotycoon/apache-exporter:latest
+        args:
+          - "--scrape_uri=http://127.0.0.1/server-status?auto"
+        ports:
+          - containerPort: 9117
+            name: metrics
+
+
       volumes:
       - name: elgg-data
         persistentVolumeClaim:
@@ -73,3 +82,18 @@ spec:
       port: 80
       targetPort: 80
       nodePort: 32330
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: elgg-app-metrics
+  labels:
+    app: elgg-app
+spec:
+  selector:
+    app: elgg-app
+  ports:
+    - name: metrics
+      port: 9117
+      targetPort: metrics
