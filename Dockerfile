@@ -177,7 +177,8 @@ RUN apt-get update && apt-get install -y \
 
 # Enable Apache mod_status for Prometheus Apache Exporter
 RUN a2enmod status && \
-    echo '<Location "/server-status">\n\
+    echo 'ExtendedStatus On\n\
+<Location "/server-status">\n\
         SetHandler server-status\n\
         Require all granted\n\
     </Location>' >> /etc/apache2/sites-available/000-default.conf
