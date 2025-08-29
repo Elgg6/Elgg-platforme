@@ -23,7 +23,7 @@ permissions:
 
 env:
   CACHE_KEY: ${{ github.sha }}
-  IMAGE_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/elgg-app:v12
+  IMAGE_TAG: ${{ secrets.DOCKERHUB_USERNAME }}/elgg-app:v11
   OPENVAS_PASSWORD: ${{ secrets.OPENVAS_PASSWORD }}
   KUBECONFIG_PATH: ${{ github.workspace }}/kubeconfig_self_managed.yaml
   # ARGOCD_APP:  myapp-argo-application
